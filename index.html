@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="業務記録">
+<meta name="apple-mobile-web-app-title" content="くらし記録">
 <meta name="theme-color" content="#EEF0F3">
-<title>業務記録</title>
+<title>くらし記録</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -163,6 +163,46 @@
   .todoEmpty { text-align:center; color:#B8BEC6; font-size:14px; padding:12px 0; }
   .doneItem { display:flex; align-items:center; padding:11px; border-radius:12px; background:#F7F8FA; margin-bottom:8px; opacity:.8; }
   .doneTime { font-size:11px; font-weight:700; color:#2E9E5B; margin-left:6px; }
+  /* ─── やること（ToDo） ─── */
+  .stopZone { cursor:pointer; border-radius:12px; }
+  .stopZone:active { background:rgba(255,255,255,.12); }
+  .todoMini { margin-top:14px; padding:10px 4px 2px; border-top:1px solid rgba(0,0,0,.07); cursor:pointer; }
+  .statusCard[style*="background:#"] .todoMini { border-top-color:rgba(255,255,255,.25); }
+  .todoMiniGrid { display:grid; grid-template-columns:1fr 1fr; grid-auto-flow:column; grid-template-rows:1fr 1fr; gap:4px 12px; }
+  .todoMiniItem { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; text-align:left; padding:2px 4px; }
+  .todoMiniDot { width:8px; height:8px; border-radius:50%; background:#B8BEC6; flex-shrink:0; }
+  .todoMiniName { color:#5A6270; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .todoMiniEmpty { font-size:12px; color:#B8BEC6; text-align:left; padding:2px 4px; }
+  .statusCard.running .todoMini { border-top-color:rgba(255,255,255,.3); }
+  .statusCard.running .todoMiniName { color:#fff; }
+  .statusCard.running .todoMiniEmpty { color:rgba(255,255,255,.85); }
+  .statusCard.running .todoMiniDot { background:#fff; }
+  .todoPanel { background:#fff; border-radius:18px; padding:16px; margin-bottom:14px; }
+  .todoPanelHead { font-size:15px; font-weight:800; margin-bottom:12px; }
+  .todoInputRow { display:flex; gap:8px; margin-bottom:10px; }
+  .todoInput { flex:1; padding:12px 14px; font-size:15px; border-radius:12px; border:1.5px solid #E3E5E8; outline:none; }
+  .todoInput:focus { border-color:#9AA1AA; }
+  .todoAddBtn { background:#5F6874; color:#fff; border:none; border-radius:12px; padding:0 20px; font-size:22px; font-weight:700; cursor:pointer; }
+  .suggestRow { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; max-height:180px; overflow-y:auto; }
+  .suggestBtn { font-size:13px; font-weight:600; padding:9px 13px; border-radius:12px; border:1.5px solid #E3E5E8; background:#F7F8FA; color:#5A6270; cursor:pointer; display:flex; align-items:center; gap:5px; }
+  .sdot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .catRow { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .catChip { font-size:12px; font-weight:700; padding:7px 12px; border-radius:10px; border:2px solid; background:#fff; cursor:pointer; opacity:.5; }
+  .catChip.on { opacity:1; }
+  .catPicker { display:flex; flex-wrap:wrap; gap:6px; padding:10px 12px 12px; margin:-6px 0 9px; background:#F7F8FA; border-radius:0 0 14px 14px; }
+  .todoRow { margin-bottom:9px; }
+  .todoItem { display:flex; align-items:center; gap:8px; padding:13px 11px; border-radius:14px; background:#F7F8FA; border:2px solid #E8EAED; }
+  .todoRank { width:28px; height:28px; border-radius:50%; background:#B8BEC6; color:#fff; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; }
+  .todoMainCol { flex:1; text-align:left; }
+  .todoText { font-size:15px; font-weight:700; color:#2A2E35; }
+  .todoTag { display:inline-block; width:9px; height:9px; border-radius:50%; margin-left:6px; vertical-align:middle; }
+  .todoAcc { font-size:11px; font-weight:700; color:#5F6874; margin-left:6px; }
+  .todoStartBtn { background:#fff; color:#5A6270; border:2px solid #B8BEC6; border-radius:10px; padding:7px 12px; font-size:13px; font-weight:800; cursor:pointer; white-space:nowrap; }
+  .todoArrow { background:none; border:none; color:#B8BEC6; cursor:pointer; font-size:20px; line-height:1; padding:2px 4px; }
+  .todoDel { background:none; border:none; color:#C7CCD2; font-size:20px; font-weight:700; cursor:pointer; padding:2px 4px; line-height:1; }
+  .todoEmpty { text-align:center; color:#B8BEC6; font-size:14px; padding:12px 0; }
+  .doneItem { display:flex; align-items:center; padding:11px; border-radius:12px; background:#F7F8FA; margin-bottom:8px; opacity:.8; }
+  .doneTime { font-size:11px; font-weight:700; color:#2E9E5B; margin-left:6px; }
 </style>
 </head>
 <body>
@@ -173,14 +213,14 @@
 // 業務の定義
 // ─────────────────────────────────────────────
 const TASKS = [
-  { id: "outlook", label: "Outlook＋マスター更新", short: "Outlook",  icon: "mail",     color: "#3B7DD8" },
-  { id: "kaikake", label: "買掛金・リベート照合",   short: "買掛金",   icon: "file",     color: "#E85B9A" },
-  { id: "hanbai",  label: "販売準備",             short: "販売準備", icon: "package",  color: "#8B5CD8" },
-  { id: "urikake", label: "売掛金関連",           short: "売掛金",   icon: "receipt",  color: "#2E9E5B" },
-  { id: "claude",  label: "Claude",              short: "Claude",  icon: "sparkles", color: "#E8863B" },
-  { id: "taiou",   label: "対応（電話・来客）",     short: "対応",     icon: "phone",    color: "#A0603A" },
-  { id: "kyukei",  label: "離席・休憩",           short: "離席",     icon: "coffee",   color: "#5F6874" },
-  { id: "sonota",  label: "その他",               short: "その他",   icon: "settings", color: "#1E3A6B" },
+  { id: "furo",    label: "風呂",         short: "風呂",   icon: "bath",     color: "#3B7DD8" },
+  { id: "kaimono", label: "買い物",       short: "買い物", icon: "cart",     color: "#E85B9A" },
+  { id: "souji",   label: "掃除・片付け",   short: "掃除",   icon: "broom",    color: "#8B5CD8" },
+  { id: "sentaku", label: "洗濯",         short: "洗濯",   icon: "laundry",  color: "#2E9E5B" },
+  { id: "device",  label: "iPhone・iPad", short: "iPhone", icon: "device",   color: "#E8863B" },
+  { id: "gaisyoku",label: "外出・外食",    short: "外出",   icon: "dining",   color: "#A0603A" },
+  { id: "undou",   label: "運動",         short: "運動",   icon: "dumbbell", color: "#5F6874" },
+  { id: "sonota",  label: "その他",       short: "その他", icon: "settings", color: "#1E3A6B" },
 ];
 const TASK_MAP = {};
 TASKS.forEach(t => TASK_MAP[t.id] = t);
@@ -198,6 +238,7 @@ let todoSeq = 1;
 const TODO_HIST_MAX = 30;
 let todoPanelOpen = false, pickedCat = null, catPickerId = null;
 let todoRunId = null;    // 実行中のやることID（業務ボタンとは排他）
+
 
 // ─────────────────────────────────────────────
 // アイコン（SVG・外部依存なし）
@@ -218,6 +259,13 @@ const ICONS = {
   right: '<polyline points="9 18 15 12 9 6"/>',
   calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  broom: '<path d="M5.5 8h13l-1.4 11a1.8 1.8 0 0 1-1.8 1.6H8.7a1.8 1.8 0 0 1-1.8-1.6z"/>',
+  laundry: '<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="13" r="5"/><circle cx="12" cy="13" r="2.2"/><line x1="7" y1="5" x2="8" y2="5"/><line x1="10" y1="5" x2="11" y2="5"/>',
+  cart: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.5l2.2 12.5a1.5 1.5 0 0 0 1.5 1.2h9a1.5 1.5 0 0 0 1.5-1.2L21 7H5.2"/>',
+  bath: '<path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M5 12V6a2 2 0 0 1 2-2 2 2 0 0 1 2 2"/><line x1="7" y1="19" x2="6" y2="21"/><line x1="17" y1="19" x2="18" y2="21"/>',
+  device: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="10.5" y1="18.5" x2="13.5" y2="18.5"/>',
+  dining: '<path d="M12 21s7-5.5 7-11a7 7 0 0 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  dumbbell: '<path d="M12 3C8.5 8.5 6 11.5 6 15a6 6 0 0 0 12 0C18 11.5 15.5 8.5 12 3z"/>',
 };
 function icon(name, color) {
   return '<svg viewBox="0 0 24 24" fill="none" stroke="' + (color || 'currentColor') +
@@ -227,7 +275,7 @@ function icon(name, color) {
 // ─────────────────────────────────────────────
 // IndexedDB
 // ─────────────────────────────────────────────
-const DB_NAME = "work-tracker-db", STORE = "sessions", TODO_STORE = "todos";
+const DB_NAME = "home-tracker-db", STORE = "sessions", TODO_STORE = "todos";
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 2);
@@ -245,20 +293,11 @@ function openDB() {
     req.onerror = () => reject(req.error);
   });
 }
-// ToDo関連の保存・読み込み（key固定で1レコードにまとめて保存）
 async function todoSave() {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(TODO_STORE, "readwrite");
-    tx.objectStore(TODO_STORE).put({
-      key: "state",
-      todos: todos,
-      done: done,
-      doneDate: doneDate,
-      learned: learned,
-      history: todoHistory,
-      seq: todoSeq
-    });
+    tx.objectStore(TODO_STORE).put({ key:"state", todos:todos, done:done, doneDate:doneDate, learned:learned, history:todoHistory, seq:todoSeq });
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -343,7 +382,6 @@ async function boot() {
   state.active = all.find(s => s.end == null) || null;
   state.sessions = all.filter(s => s.end != null);
   rebuildMemoHistory(all);
-  // やることの読み込み
   try {
     const td = await todoLoad();
     if (td) {
@@ -354,7 +392,7 @@ async function boot() {
       todoHistory = td.history || [];
       todoSeq = td.seq || 1;
     }
-  } catch(e) { /* 初回は何もない */ }
+  } catch(e) {}
   todoCheckDoneDate();
   startTick();
   render();
@@ -392,7 +430,6 @@ async function handleTask(taskId) {
     const finished = Object.assign({}, state.active, { end: ts });
     await dbPut(finished);
     state.sessions.push(finished);
-    // やることが動いてたら、途中まで記録して残す
     if (todoRunId !== null) {
       const t = todos.find(x => x.id === todoRunId);
       if (t) t.acc += (ts - state.active.start);
@@ -590,7 +627,7 @@ function handleExport() {
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = "業務記録_" + dateKeyOf(new Date()) + ".csv";
+  a.href = url; a.download = "くらし記録_" + dateKeyOf(new Date()) + ".csv";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -703,7 +740,7 @@ function render() {
   const grandTotal = Object.values(totals).reduce((a,b)=>a+b,0);
 
   let html = '<div class="container">';
-  html += '<div class="appHeader">業務記録</div>';
+  html += '<div class="appHeader">くらし記録</div>';
 
   // 記録中カード
   if (activeTask) {
